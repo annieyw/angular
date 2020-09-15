@@ -2446,6 +2446,27 @@ import {MyInput, MyInputForm} from './value_accessor_integration_spec';
         expect(fixture.componentInstance.control.value).toEqual('updatedValue');
       });
     });
+
+    describe('cleanup', () => {
+      it('should clean up datepicker validators when FormGroup is replaced', () => {
+        const fixture = initTest(FormControlDatepickerValidator);
+        fixture.detectChanges();
+
+        const component = fixture.componentInstance;
+        const startDate = component.form.get('startDate');
+        const endDate = component.form.get('endDate');
+        const date = component.form.get('date');
+
+        startDate?.setValue(new Date('2020/09/19'));
+        endDate?.setValue(new Date('2020/09/19'));
+        date?.setValue(new Date('2020/09/19'));
+        component.arr.pop();
+        endDate?.setValue(new Date('2020/09/20'));
+        date?.setValue(new Date('2020/09/20'));
+
+        expect(date?.errors).toBeNull();
+      });
+    });
   });
 }
 
@@ -2677,4 +2698,36 @@ class FormControlCheckboxRequiredValidator {
 class UniqLoginWrapper {
   // TODO(issue/24571): remove '!'.
   form!: FormGroup;
+}
+
+@Component({
+  selector: 'from-control-datepicker-validator',
+  template: `
+    <div [formGroup]="form">
+      <input
+        [matDatepicker]="startDatePicker"
+        [max]="form.get('endDate').value"
+        formControlName="startDate">
+      <mat-datepicker #startDatePicker></mat-datepicker>
+      <input
+        [matDatepicker]="endDatePicker"
+        [min]="form.get('startDate').value"
+        formControlName="endDate">
+      <mat-datepicker #endDatePicker></mat-datepicker>
+      <div *ngFor="let i of arr">
+        <input
+          [matDatepicker]="datepicker"
+          formControlName="date"
+          [min]="form.get('startDate').value"
+          [max]="form.get('endDate').value">
+        <mat-datepicker #datepicker></mat-datepicker>
+      </div>
+    </div>
+  `
+})
+class FormControlDatepickerValidator {
+  arr = [1, 2, 3]
+
+  form = new FormGroup(
+      {startDate: new FormControl(), endDate: new FormControl(), date: new FormControl()})
 }
